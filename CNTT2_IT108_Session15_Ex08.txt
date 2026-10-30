@@ -1,0 +1,28 @@
+##Bài 8: Kiểm Tra Vì Sao Dữ Liệu Khách Hàng CampusPay Bị Rò Rỉ Ra Ngoài
+### PHẦN 1: PHÂN TÍCH LỖ HỔNG
+
+**1. Xác định nguồn gốc rò rỉ và giải thích kỹ thuật:**
+* **Dòng log gây rò rỉ trực tiếp:** Dòng 1 (08:15 T2) - File `campuspay_beta_to_users.xlsx` do Thành viên A (Frontend) thực hiện.
+* **Tổ hợp quyền & phạm vi:** `Editor` kết hợp với `Anyone with the link`.
+* **Cơ chế rò rỉ:** File này chứa thông tin nhạy cảm của sinh viên (họ tên, SĐT, số tài khoản). Việc để chế độ `Anyone with the link` nghĩa là bất kỳ ai có link đều vào được, cộng thêm quyền `Editor` nên dữ liệu dễ dàng bị mang đi phát tán lên Facebook mà không bị chặn, vi phạm nghiêm trọng "Quy tắc Cờ Đỏ Bảo mật".
+
+**2. 3 giả thuyết 'Email lạ' truy cập được `campuspay_api_keys.txt` (dù ban đầu để Restricted):**
+* **Giả thuyết 1:** Email B vô tình chia sẻ tiếp quyền hoặc gửi link cho người lạ đó.
+* **Giả thuyết 2:** Tài khoản của Email B bị lộ thông tin đăng nhập nên bị người lạ mạo danh vào xem.
+* **Giả thuyết 3:** Có lúc trước đó ai đó đã chỉnh nhầm phạm vi thành công khai (`Anyone with the link`) rồi mới sửa lại Restricted, khiến người lạ kịp lưu lại đường dẫn.
+
+---
+
+### PHẦN 2: SỬA LỖI & NGHIỆM THU
+
+**3. Bảng cấu hình quyền chia sẻ đúng chuẩn:**
+
+| Tên file | Quyền đúng | Phạm vi đúng | Giải thích ngắn gọn |
+| :--- | :--- | :--- | :--- |
+| `campuspay_beta_to_users.xlsx` | Viewer | Restricted | Chỉ cho thành viên trong nhóm test xem dữ liệu mẫu, không để lộ ra ngoài. |
+| `campuspay_api_keys.txt` | Viewer | Restricted | Chứa API key tối mật, chỉ lập trình viên cần thiết mới được xem. |
+| `slide_pitch_v8.pptx` | Commenter / Editor | Restricted | Tài liệu nội bộ để làm slide, chỉ cấp cho team design và nhóm thực hiện. |
+
+**4. Về cách xử lý link cũ và tính năng Set Expiration Date:**
+* **Vô hiệu hóa link cũ nhanh nhất:** Chuyển phạm vi chia sẻ về **Restricted** (hoặc tắt liên kết công khai). Cách này giúp cắt đứt và vô hiệu hóa ngay lập tức mọi đường link cũ mà người ngoài đang nắm giữ.
+* **Khi nào nên dùng 'Set Expiration Date':** Dùng khi cần chia sẻ tài liệu cho người ngoài hoặc bên thứ ba (như người chấm bài, cộng tác viên, đối tác test) trong một khoảng thời gian ngắn hạn. Hết thời gian hệ thống tự động thu hồi quyền, tránh việc bị quên xử lý thủ công.
